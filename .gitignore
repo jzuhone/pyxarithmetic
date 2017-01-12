@@ -1,0 +1,3 @@
+syntax: glob
+*.pyc
+pyxarithmetic.egg-info
