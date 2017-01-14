@@ -6,6 +6,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class ClusterImage(object):
     def __init__(self, source_img, model_img=None):
+        self.wcs = pywcs.WCS(naxis=2)
         self.source_img = self._get_image(source_img, find_wcs=True) 
         if model_img is None:
             self.model_img = self._make_model(self.source_img)
@@ -47,11 +48,15 @@ class ClusterImage(object):
         return pr(r)
 
     def writeto(self, filename, overwrite=True):
+        header = self.wcs.to_header()
         shdu = pyfits.PrimaryHDU(self.source_img, header=header)
         mhdu = pyfits.ImageHDU(self.model_img, header=header)
         rhdu = pyfits.ImageHDU(self.resid_img, header=header)
+        shdu.name = "SOURCE"
+        mhdu.name = "MODEL"
+        rhdu.name = "RESIDUALS"
         pyfits.HDUList([shdu, mhdu, rhdu]).writeto(filename, overwrite=overwrite)
 
 def add_images(img1, img2, cB1, cB2):
     X = cB1*img1.resid_img+cB2*img2.resid_img
-    return pyfits.ImageHDU(X)
+    return pyfits.ImageHDU(X, header=img1.wcs.to_header())
